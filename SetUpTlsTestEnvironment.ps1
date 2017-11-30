@@ -73,7 +73,20 @@ foreach ($l in $Locations) {
     if ($NotPresent) {
         $app = New-AzureRmWebApp -Name $webAppName -ResourceGroupName $ResourceGroupName -Location $l -TrafficManagerProfileId $tm.Id -AppServicePlan $asp.Id
     }
- 
+
+    # Defines a variable for a dotnet get started web app repository location
+    $gitrepo="https://github.com/Azure-Samples/app-service-web-dotnet-get-started.git"
+
+    # Configure GitHub deployment from your GitHub repo and deploy once to web app.
+    $PropertiesObject = @{
+        repoUrl = "$gitrepo";
+        branch = "master";
+        isManualIntegration = "true";
+    }
+
+    Set-AzureRmResource -PropertyObject $PropertiesObject -ResourceGroupName $ResourceGroupName -ResourceType Microsoft.Web/sites/sourcecontrols -ResourceName $webAppName/web -ApiVersion 2015-08-01 -Force
+
+
     $tmep = Get-AzureRmTrafficManagerEndpoint -Name $webAppName -ResourceGroupName $ResourceGroupName -ProfileName "trafman" -Type "AzureEndpoints" -ErrorVariable NotPresent -ErrorAction 0
     if ($NotPresent) {
         $tmep = New-AzureRmTrafficManagerEndpoint -Name $webAppName -ProfileName "trafman" `
@@ -85,6 +98,9 @@ foreach ($l in $Locations) {
 
     if ([string]::IsNullOrEmpty($binding)) {
 
+        #Make sure we have the latest version of the app including any settings imposed by traffic manager config.
+        $app = Get-AzureRmWebApp -Name $webAppName -ResourceGroupName $ResourceGroupName
+        
         $hosts = $app.HostNames
         if (!$hosts.Contains($Fqdn)) {
             $hosts.Add($Fqdn)
