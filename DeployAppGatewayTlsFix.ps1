@@ -11,7 +11,8 @@ Gateway instead. The Gateway will only have TLS 1.1 and above enabled and traffi
 such that only traffic from the gateway is allowed. 
 
 .EXAMPLE
-.\DeployAppGatewayTlsFix.ps1 
+.\DeployAppGatewayTlsFix.ps1 -ResourceGroupName <RESOURCE GROUP> -TrafficManagerProfileName <TM NAME> `
+-CertificatePath <PATH TO PFX> -Environment AzureUsGovernment
 
 .NOTES
     Author: Michael Hansen (mihansen@microsoft.com)
@@ -128,8 +129,11 @@ foreach ($ep in $tm.Endpoints)
         # Define the application gateway SKU to use
         $sku = New-AzureRmApplicationGatewaySku -Name $ApplicationGatewaySku -Tier Standard -Capacity $ApplicationGatewayInstances
 
-        $sslpolicy = New-AzureRmApplicationGatewaySSLPolicy -PolicyType Custom -MinProtocolVersion TLSv1_2 -CipherSuite "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_GCM_SHA256"
-
+        #$sslpolicy = New-AzureRmApplicationGatewaySSLPolicy -PolicyType Custom -MinProtocolVersion TLSv1_2 -CipherSuite "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_GCM_SHA256"
+        
+        #Predefined policy with min TLS 1.1
+        $sslpolicy = New-AzureRmApplicationGatewaySslPolicy -PolicyType Predefined -PolicyName AppGwSslPolicy20170401
+        
         $appgw =  Get-AzureRmApplicationGateway -Name $gwName -ResourceGroupName $trg -ErrorVariable NotPresent -ErrorAction 0
 
         if ($NotPresent) {
