@@ -114,7 +114,8 @@ foreach ($ep in $tm.Endpoints)
 
         # Create a new front-end port
         $fp = New-AzureRmApplicationGatewayFrontendPort -Name frontendport01  -Port 443
-
+        $fp2 = New-AzureRmApplicationGatewayFrontendPort -Name frontendport02  -Port 80
+        
         # Create a new front end IP configuration
         $fipconfig = New-AzureRmApplicationGatewayFrontendIPConfig -Name fipconfig01 -PublicIPAddress $publicip
 
@@ -122,10 +123,15 @@ foreach ($ep in $tm.Endpoints)
         
         # Create a new listener using the front-end ip configuration and port created earlier
         $listener = New-AzureRmApplicationGatewayHttpListener -Name listener01 -Protocol Https -FrontendIPConfiguration $fipconfig -FrontendPort $fp -SslCertificate $cert
-
+        $listener2 = New-AzureRmApplicationGatewayHttpListener -Name listener02 -Protocol Http -FrontendIPConfiguration $fipconfig -FrontendPort $fp2
+        
         # Create a new rule
         $rule = New-AzureRmApplicationGatewayRequestRoutingRule -Name rule01 -RuleType Basic -BackendHttpSettings $poolSetting -HttpListener $listener -BackendAddressPool $pool 
 
+        # Add a redirection configuration using a permanent redirect and targeting the existing listener
+        $redirectconfig = New-AzureRmApplicationGatewayRedirectConfiguration -Name redirectHttptoHttps -RedirectType Permanent -TargetListener $listener -IncludePath $true -IncludeQueryString $true
+        $rule2 = New-AzureRmApplicationGatewayRequestRoutingRule -Name rule02 -RuleType Basic -HttpListener $listener2 -RedirectConfiguration $redirectconfig
+                
         # Define the application gateway SKU to use
         $sku = New-AzureRmApplicationGatewaySku -Name $ApplicationGatewaySku -Tier Standard -Capacity $ApplicationGatewayInstances
 
@@ -141,8 +147,8 @@ foreach ($ep in $tm.Endpoints)
             $appgw = New-AzureRmApplicationGateway -Name $gwName -ResourceGroupName $trg -Location $tloc `
             -BackendAddressPools $pool -BackendHttpSettingsCollection $poolSetting -Probes $probeconfig `
             -FrontendIpConfigurations $fipconfig  -GatewayIpConfigurations $gipconfig `
-            -FrontendPorts $fp -HttpListeners $listener -RequestRoutingRules $rule -Sku $sku `
-            -SslPolicy $sslpolicy -SSLCertificates $cert
+            -FrontendPorts $fp,$fp2 -HttpListeners $listener,$listener2 -RequestRoutingRules $rule,$rule2 -Sku $sku `
+            -SslPolicy $sslpolicy -SSLCertificates $cert -RedirectConfigurations $redirectconfig
         }
 
         #Making sure we have updated IP info.
