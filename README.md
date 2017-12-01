@@ -49,4 +49,4 @@ You will be prompted for a password for the SSL cert.
 To Do List
 ----------
 
- * Add HTTP listener and redirect to HTTPS (if needed)
+ * Investigate implications of Dynamic Public IP on Gateway and IP restrictions on Web App. It is [not possible](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-ip-addresses-overview-arm) to assign a static public IP address to an Application Gateway. 
